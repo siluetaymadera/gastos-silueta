@@ -382,7 +382,7 @@ async function escanear() {
         'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022', max_tokens: 800,
+        model: 'claude-3-haiku-20240307', max_tokens: 800,
         messages: [{ role: 'user', content: [
           { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imgB64 } },
           { type: 'text', text: 'Analiza esta boleta o factura chilena. Responde SOLO con JSON sin texto extra ni markdown:\n{"comercio":"nombre del negocio","direccion":"dirección o vacío","rut":"RUT formato XX.XXX.XXX-X o vacío","fecha":"YYYY-MM-DD","articulos":"descripción breve de artículos o servicio","monto":numero_entero_sin_puntos,"categoria":"Insumos o Servicios o Arriendo o Marketing o Equipamiento o Alimentacion o Transporte o Bancario o Otro"}\nSi no encuentras un dato usa string vacío o 0. Fecha hoy: ' + new Date().toISOString().split('T')[0] }
