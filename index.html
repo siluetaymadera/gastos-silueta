@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registro de Gastos</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f5f5f5;color:#1a1a1a;min-height:100vh;}
+
+/* SETUP */
+.setup{position:fixed;inset:0;background:#000;z-index:999;display:flex;align-items:center;justify-content:center;padding:1rem;}
+.sbox{background:#fff;border-radius:16px;padding:2rem;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.3);}
+.sbox h1{font-size:22px;font-weight:700;margin-bottom:.25rem;}
+.sbox p{font-size:13px;color:#666;margin-bottom:1.5rem;}
+.sbox label{display:block;font-size:12px;font-weight:600;color:#444;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;}
+.sbox input{width:100%;border:1.5px solid #ddd;border-radius:10px;padding:11px 14px;font-size:14px;outline:none;margin-bottom:1rem;}
+.sbox input:focus{border-color:#6c47ff;}
+.sbox .note{font-size:12px;color:#888;background:#f9f9f9;border-radius:8px;padding:.75rem;margin-bottom:1rem;line-height:1.6;}
+.sbox button{width:100%;background:#6c47ff;color:#fff;border:none;padding:13px;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;}
+.sbox button:hover{background:#5a3de0;}
+.serr{color:#e05555;font-size:12px;margin-top:.5rem;display:none;}
+
+/* HEADER */
+.header{background:#fff;border-bottom:1px solid #e5e5e5;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.06);}
+.header h1{font-size:18px;font-weight:700;}
+.header p{font-size:11px;color:#888;margin-top:1px;}
+.hright{display:flex;align-items:center;gap:8px;}
+.pill{display:flex;align-items:center;gap:5px;background:#f5f5f5;border:1px solid #e5e5e5;border-radius:20px;padding:5px 12px;font-size:12px;color:#666;}
+.dot{width:7px;height:7px;border-radius:50%;background:#ddd;}
+.dot.ok{background:#22c55e;}
+.dot.busy{background:#f59e0b;animation:blink 1s infinite;}
+.dot.err{background:#ef4444;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.keybtn{background:#f5f5f5;border:1px solid #e5e5e5;color:#666;padding:5px 12px;border-radius:20px;font-size:12px;cursor:pointer;}
+
+/* MAIN */
+.main{max-width:860px;margin:0 auto;padding:1.5rem;}
+
+/* UPLOAD CARD */
+.card{background:#fff;border-radius:16px;border:1px solid #e8e8e8;overflow:hidden;margin-bottom:1.25rem;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.chead{padding:1rem 1.25rem;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;gap:.75rem;}
+.chead-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#f0edff;}
+.chead h2{font-size:14px;font-weight:600;}
+.chead p{font-size:11px;color:#888;margin-top:1px;}
+
+/* DROP */
+.drop{margin:1.25rem;border:2px dashed #e0e0e0;border-radius:12px;padding:2.5rem 1rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:#fafafa;}
+.drop:hover,.drop.drag{border-color:#6c47ff;background:#f5f0ff;}
+.drop input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.drop-icon{font-size:44px;margin-bottom:.75rem;}
+.drop h3{font-size:15px;font-weight:600;color:#6c47ff;margin-bottom:.25rem;}
+.drop p{font-size:13px;color:#888;}
+
+/* CAMERA */
+.cam-row{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin:0 1.25rem 1.25rem;}
+.cbtn{background:#f8f8f8;border:1.5px solid #e8e8e8;border-radius:10px;padding:.85rem;font-size:13px;color:#555;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;transition:all .15s;}
+.cbtn:hover{border-color:#6c47ff;color:#6c47ff;background:#f5f0ff;}
+
+/* PREVIEW */
+.prev{margin:0 1.25rem 1.25rem;position:relative;display:none;}
+.prev img{width:100%;max-height:260px;object-fit:contain;border-radius:10px;border:1px solid #e8e8e8;background:#f9f9f9;}
+.prev-rm{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:7px;padding:5px 12px;font-size:12px;cursor:pointer;}
+
+/* ANALYZING */
+.analyzing{margin:1.25rem;background:#f8f8f8;border-radius:12px;padding:2rem;text-align:center;display:none;}
+.spin{width:44px;height:44px;border:3px solid #e8e8e8;border-top-color:#6c47ff;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto .75rem;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.albl{font-size:15px;font-weight:600;color:#6c47ff;}
+.asub{font-size:12px;color:#888;margin-top:4px;}
+
+/* RESULT */
+.result{margin:0 1.25rem 1.25rem;display:none;}
+.rtitle{font-size:12px;font-weight:600;color:#22c55e;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem;display:flex;align-items:center;gap:6px;}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;}
+.fgrid .full{grid-column:1/-1;}
+.field label{display:block;font-size:11px;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+.field input,.field select{width:100%;border:1.5px solid #e8e8e8;border-radius:9px;padding:10px 12px;font-size:13px;font-family:inherit;outline:none;background:#fff;color:#1a1a1a;}
+.field input:focus,.field select:focus{border-color:#6c47ff;}
+.field .highlight{border-color:#6c47ff;background:#f5f0ff;font-weight:700;color:#6c47ff;font-size:16px;}
+
+/* BUTTONS */
+.scan-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:calc(100% - 2.5rem);margin:0 1.25rem 1.25rem;background:#6c47ff;color:#fff;border:none;padding:14px;border-radius:11px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:background .15s;}
+.scan-btn:hover{background:#5a3de0;}
+.scan-btn:disabled{background:#d0d0d0;color:#999;cursor:not-allowed;}
+.save-btn{width:100%;background:#22c55e;color:#fff;border:none;padding:14px;border-radius:11px;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;margin-top:.75rem;transition:background .15s;}
+.save-btn:hover{background:#16a34a;}
+.save-btn:disabled{background:#d0d0d0;color:#999;cursor:not-allowed;}
+
+/* HISTORIAL */
+.hfilt{padding:.75rem 1.25rem;border-bottom:1px solid #f0f0f0;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.hfilt select{border:1.5px solid #e8e8e8;border-radius:8px;padding:6px 10px;font-size:12px;font-family:inherit;outline:none;background:#fff;cursor:pointer;color:#444;}
+.hfilt select:focus{border-color:#6c47ff;}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);background:#f9f9f9;border-bottom:1px solid #f0f0f0;}
+.stat{padding:.85rem 1.25rem;border-right:1px solid #f0f0f0;}
+.stat:last-child{border-right:none;}
+.sval{font-size:20px;font-weight:700;color:#6c47ff;}
+.slbl{font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-top:2px;}
+
+/* TABLE */
+.twrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:#888;text-transform:uppercase;letter-spacing:.05em;border-bottom:1.5px solid #f0f0f0;background:#fafafa;white-space:nowrap;}
+tbody tr{border-bottom:1px solid #f5f5f5;transition:background .1s;}
+tbody tr:last-child{border-bottom:none;}
+tbody tr:hover{background:#fafafa;}
+tbody td{padding:11px 14px;vertical-align:middle;}
+.empty{text-align:center;padding:3rem;color:#aaa;font-size:14px;}
+
+/* BADGE */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.b1{background:#ede9fe;color:#6c47ff;}
+.b2{background:#dcfce7;color:#16a34a;}
+.b3{background:#fef3c7;color:#d97706;}
+.b4{background:#fee2e2;color:#dc2626;}
+.b5{background:#e0f2fe;color:#0369a1;}
+.b6{background:#f3f4f6;color:#6b7280;}
+
+/* DEL */
+.delbtn{background:#fee2e2;color:#dc2626;border:none;padding:4px 10px;border-radius:7px;font-size:11px;cursor:pointer;font-family:inherit;}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1a1a1a;color:#fff;border-radius:12px;padding:12px 22px;font-size:14px;z-index:600;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+.toast.ok{background:#16a34a;}
+.toast.err{background:#dc2626;}
+
+@media(max-width:600px){
+  .fgrid{grid-template-columns:1fr;}
+  .fgrid .full{grid-column:1;}
+  .stats{grid-template-columns:1fr 1fr;}
+  .cam-row{grid-template-columns:1fr;}
+  .main{padding:1rem;}
+}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div class="setup" id="setup">
+  <div class="sbox">
+    <h1>🧾 Registro de Gastos</h1>
+    <p>Ingresa tu API Key de Anthropic para comenzar a escanear boletas con IA</p>
+    <label>API Key de Anthropic</label>
+    <input id="cfg-key" type="password" placeholder="sk-ant-...">
+    <div class="note">
+      Obtén tu key gratis en <strong>console.anthropic.com</strong><br>
+      Se guarda solo en tu navegador. Costo: ~$0.002 USD por boleta.
+    </div>
+    <button onclick="guardarCfg()">Comenzar →</button>
+    <div class="serr" id="serr">La key debe empezar con sk-ant-</div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <h1>🧾 Registro de Gastos</h1>
+    <p>Escaneo automático con IA → Google Sheets</p>
+  </div>
+  <div class="hright">
+    <div class="pill"><div class="dot" id="sdot"></div><span id="slbl">Conectando…</span></div>
+    <button class="keybtn" onclick="document.getElementById('setup').style.display='flex'">⚙ Key</button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- UPLOAD -->
+  <div class="card">
+    <div class="chead">
+      <div class="chead-icon">📷</div>
+      <div>
+        <h2>Subir boleta o factura</h2>
+        <p>La IA extrae comercio, RUT, artículos, monto y fecha automáticamente</p>
+      </div>
+    </div>
+
+    <div class="drop" id="drop"
+      ondragover="event.preventDefault();this.classList.add('drag')"
+      ondragleave="this.classList.remove('drag')"
+      ondrop="handleDrop(event)">
+      <input type="file" accept="image/*" id="finp" onchange="handleFile(this.files[0])">
+      <div class="drop-icon">📄</div>
+      <h3>Arrastra aquí tu boleta</h3>
+      <p>o haz clic para seleccionar desde tu dispositivo</p>
+    </div>
+
+    <div class="cam-row">
+      <button class="cbtn" onclick="document.getElementById('cinp').click()">
+        📸 Cámara trasera
+        <input type="file" accept="image/*" capture="environment" id="cinp" style="display:none" onchange="handleFile(this.files[0])">
+      </button>
+      <button class="cbtn" onclick="document.getElementById('cfrt').click()">
+        🤳 Cámara frontal
+        <input type="file" accept="image/*" capture="user" id="cfrt" style="display:none" onchange="handleFile(this.files[0])">
+      </button>
+    </div>
+
+    <div class="prev" id="prev">
+      <img id="previmg" src="" alt="boleta">
+      <button class="prev-rm" onclick="limpiar()">✕ Quitar</button>
+    </div>
+
+    <div class="analyzing" id="analyzing">
+      <div class="spin"></div>
+      <div class="albl">Analizando con Claude IA…</div>
+      <div class="asub" id="astep">Leyendo imagen</div>
+    </div>
+
+    <div class="result" id="result">
+      <div class="rtitle">✅ Datos extraídos — revisa y corrige si es necesario</div>
+      <div class="fgrid">
+        <div class="field full"><label>Nombre del comercio</label><input id="r-com" type="text" placeholder="Farmacia Cruz Verde, etc."></div>
+        <div class="field full"><label>Dirección</label><input id="r-dir" type="text" placeholder="Calle y número"></div>
+        <div class="field"><label>RUT del comercio</label><input id="r-rut" type="text" placeholder="12.345.678-9"></div>
+        <div class="field"><label>Fecha</label><input id="r-fecha" type="date"></div>
+        <div class="field full"><label>Artículos / Descripción</label><input id="r-art" type="text" placeholder="Descripción del gasto"></div>
+        <div class="field"><label>Monto total ($)</label><input id="r-monto" type="number" class="highlight" placeholder="0"></div>
+        <div class="field"><label>Categoría</label>
+          <select id="r-cat">
+            <option value="Insumos">Insumos / Productos</option>
+            <option value="Servicios">Servicios</option>
+            <option value="Arriendo">Arriendo</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Equipamiento">Equipamiento</option>
+            <option value="Alimentacion">Alimentación</option>
+            <option value="Transporte">Transporte</option>
+            <option value="Bancario">Bancario</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+      </div>
+      <button class="save-btn" id="savebtn" onclick="guardarGasto()">💾 Guardar en Google Sheets</button>
+    </div>
+
+    <button class="scan-btn" id="scanbtn" onclick="escanear()" disabled>🤖 Analizar con IA</button>
+  </div>
+
+  <!-- HISTORIAL -->
+  <div class="card">
+    <div class="chead">
+      <div class="chead-icon">📊</div>
+      <div><h2>Registro de gastos</h2><p>Historial completo sincronizado con Google Sheets</p></div>
+    </div>
+    <div class="hfilt">
+      <select id="fmes" onchange="renderHist()">
+        <option value="">Todos los meses</option>
+        <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+        <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+        <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+        <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+      </select>
+      <select id="fcat" onchange="renderHist()">
+        <option value="">Todas las categorías</option>
+        <option value="Insumos">Insumos</option><option value="Servicios">Servicios</option>
+        <option value="Arriendo">Arriendo</option><option value="Marketing">Marketing</option>
+        <option value="Equipamiento">Equipamiento</option><option value="Alimentacion">Alimentación</option>
+        <option value="Transporte">Transporte</option><option value="Bancario">Bancario</option>
+        <option value="Otro">Otro</option>
+      </select>
+      <select id="fanio" onchange="renderHist()">
+        <option value="">Todos los años</option>
+        <option value="2025">2025</option><option value="2026">2026</option>
+      </select>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="sval" id="stotal">$0</div><div class="slbl">Total</div></div>
+      <div class="stat"><div class="sval" id="scount">0</div><div class="slbl">Registros</div></div>
+      <div class="stat"><div class="sval" id="sprom">$0</div><div class="slbl">Promedio</div></div>
+      <div class="stat"><div class="sval" id="smayor">—</div><div class="slbl">Mayor gasto</div></div>
+    </div>
+    <div class="twrap">
+      <table>
+        <thead><tr>
+          <th>Fecha</th><th>Comercio</th><th>RUT</th><th>Artículos</th>
+          <th>Categoría</th><th>Monto</th><th></th>
+        </tr></thead>
+        <tbody id="tbhist"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzyMRl5njqrlMA0HizeWMmrjo_mapTxsfM005PIPnpOQ35tNLokdsw_ztbUobTyR53Mew/exec';
+let API_KEY = localStorage.getItem('gkey') || '';
+let gastos = [], imgB64 = null;
+
+window.onload = () => {
+  if (!API_KEY) { document.getElementById('setup').style.display = 'flex'; }
+  else { document.getElementById('setup').style.display = 'none'; cargar(); }
+};
+
+async function guardarCfg() {
+  const k = document.getElementById('cfg-key').value.trim();
+  if (!k.startsWith('sk-ant-')) { document.getElementById('serr').style.display = 'block'; return; }
+  // Guardar key en Apps Script (server-side) para que Claude se llame desde allá
+  const btn = document.querySelector('.sbox button');
+  btn.textContent = 'Guardando…'; btn.disabled = true;
+  try {
+    await postSheet({ accion: 'setKey', key: k });
+    API_KEY = k; localStorage.setItem('gkey', k);
+    document.getElementById('setup').style.display = 'none';
+    cargar();
+  } catch(e) {
+    btn.textContent = 'Comenzar →'; btn.disabled = false;
+    alert('Error guardando key: ' + e.message);
+  }
+}
+
+function setS(e, t) { document.getElementById('sdot').className = 'dot ' + e; document.getElementById('slbl').textContent = t; }
+
+function leerSheet() {
+  return new Promise((res, rej) => {
+    const cb = '_c' + Date.now();
+    const s = document.createElement('script');
+    s.src = SCRIPT_URL + '?callback=' + cb;
+    window[cb] = d => { delete window[cb]; document.body.removeChild(s); res(d.data || []); };
+    s.onerror = () => rej(new Error('Sin conexión'));
+    document.body.appendChild(s);
+  });
+}
+
+function postSheetJSON(payload) {
+  // Para operaciones que necesitan respuesta (analizar imagen)
+  return new Promise((resolve, reject) => {
+    const cb = '_j' + Date.now();
+    const url = SCRIPT_URL + '?callback=' + cb;
+    // Usamos fetch con no-cors no funciona para leer respuesta
+    // Usamos el truco de script tag con POST simulado via form + callback
+    // En realidad hacemos GET con los datos en base64 truncado - mejor approach:
+    // Enviamos via fetch normal (el Apps Script tiene CORS abierto para GET)
+    // Para POST con respuesta usamos fetch directo
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'payload=' + encodeURIComponent(JSON.stringify(payload))
+    })
+    .then(r => r.json())
+    .then(d => resolve(d))
+    .catch(e => reject(e));
+  });
+}
+
+function postSheet(payload) {
+  return new Promise(resolve => {
+    const nm = '_f' + Date.now();
+    const iframe = document.createElement('iframe');
+    iframe.name = nm; iframe.style.display = 'none'; document.body.appendChild(iframe);
+    const form = document.createElement('form');
+    form.method = 'POST'; form.action = SCRIPT_URL; form.target = nm;
+    const inp = document.createElement('input');
+    inp.type = 'hidden'; inp.name = 'payload'; inp.value = JSON.stringify(payload);
+    form.appendChild(inp); document.body.appendChild(form); form.submit();
+    setTimeout(() => { document.body.removeChild(iframe); document.body.removeChild(form); resolve(true); }, 2500);
+  });
+}
+
+async function cargar() {
+  setS('busy', 'Conectando…');
+  try { gastos = await leerSheet(); setS('ok', 'Conectado ✓'); renderHist(); }
+  catch (e) { setS('err', 'Sin conexión'); toast('Error de conexión', 'err'); }
+}
+
+function handleDrop(e) { e.preventDefault(); document.getElementById('drop').classList.remove('drag'); const f = e.dataTransfer.files[0]; if (f) handleFile(f); }
+
+function handleFile(f) {
+  if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => {
+    imgB64 = ev.target.result.split(',')[1];
+    document.getElementById('previmg').src = ev.target.result;
+    document.getElementById('prev').style.display = 'block';
+    document.getElementById('drop').style.display = 'none';
+    document.getElementById('scanbtn').disabled = false;
+    document.getElementById('result').style.display = 'none';
+    document.getElementById('analyzing').style.display = 'none';
+  };
+  r.readAsDataURL(f);
+}
+
+function limpiar() {
+  imgB64 = null;
+  document.getElementById('prev').style.display = 'none';
+  document.getElementById('drop').style.display = 'block';
+  document.getElementById('scanbtn').disabled = true;
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('analyzing').style.display = 'none';
+  ['finp','cinp','cfrt'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+}
+
+async function escanear() {
+  if (!imgB64) return;
+  if (!API_KEY) { document.getElementById('setup').style.display = 'flex'; return; }
+  document.getElementById('scanbtn').disabled = true;
+  document.getElementById('result').style.display = 'none';
+  document.getElementById('analyzing').style.display = 'block';
+  const pasos = ['Leyendo imagen…', 'Identificando comercio y RUT…', 'Extrayendo montos…', 'Procesando datos…'];
+  let p = 0;
+  const iv = setInterval(() => { if (p < pasos.length - 1) p++; document.getElementById('astep').textContent = pasos[p]; }, 900);
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 800,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: imgB64 } },
+          { type: 'text', text: 'Analiza esta boleta o factura chilena. Responde SOLO con JSON sin texto extra ni markdown:\n{"comercio":"nombre del negocio","direccion":"dirección o vacío","rut":"RUT formato XX.XXX.XXX-X o vacío","fecha":"YYYY-MM-DD","articulos":"descripción breve de artículos o servicio","monto":numero_entero_sin_puntos,"categoria":"Insumos o Servicios o Arriendo o Marketing o Equipamiento o Alimentacion o Transporte o Bancario o Otro"}\nSi no encuentras un dato usa string vacío o 0. Fecha hoy: ' + new Date().toISOString().split('T')[0] }
+        ]}]
+      })
+    });
+    clearInterval(iv);
+    if (!res.ok) { const err = await res.json(); throw new Error(err.error?.message || 'Error API ' + res.status); }
+    const data = await res.json();
+    const txt = data.content[0].text.trim().replace(/```json|```/g, '').trim();
+    const obj = JSON.parse(txt);
+    document.getElementById('r-com').value = obj.comercio || '';
+    document.getElementById('r-dir').value = obj.direccion || '';
+    document.getElementById('r-rut').value = obj.rut || '';
+    document.getElementById('r-fecha').value = obj.fecha || new Date().toISOString().split('T')[0];
+    document.getElementById('r-art').value = obj.articulos || '';
+    document.getElementById('r-monto').value = obj.monto || 0;
+    if (obj.categoria) document.getElementById('r-cat').value = obj.categoria;
+    document.getElementById('analyzing').style.display = 'none';
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('scanbtn').disabled = false;
+    toast('✓ Boleta analizada correctamente', 'ok');
+  } catch (e) {
+    clearInterval(iv);
+    document.getElementById('analyzing').style.display = 'none';
+    document.getElementById('scanbtn').disabled = false;
+    toast('Error: ' + e.message, 'err');
+    console.error(e);
+  }
+}
+
+async function guardarGasto() {
+  const btn = document.getElementById('savebtn');
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  setS('busy', 'Guardando…');
+  const hoy = new Date().toISOString();
+  const g = {
+    id: 'GST-' + Date.now(),
+    comercio: document.getElementById('r-com').value,
+    rut: document.getElementById('r-rut').value,
+    direccion: document.getElementById('r-dir').value,
+    articulos: document.getElementById('r-art').value,
+    monto: document.getElementById('r-monto').value,
+    categoria: document.getElementById('r-cat').value,
+    registrado: hoy,
+    fecha: document.getElementById('r-fecha').value,
+  };
+  try {
+    await postSheet({ accion: 'guardar', fila: g });
+    gastos.push(g); renderHist(); limpiar();
+    setS('ok', 'Guardado ✓');
+    toast('💾 Guardado en Google Sheets', 'ok');
+  } catch (e) {
+    setS('err', 'Error'); toast('Error al guardar', 'err');
+    btn.disabled = false; btn.textContent = '💾 Guardar en Google Sheets';
+  }
+}
+
+function renderHist() {
+  const mes = document.getElementById('fmes')?.value || '';
+  const cat = document.getElementById('fcat')?.value || '';
+  const anio = document.getElementById('fanio')?.value || '';
+  let list = [...gastos];
+  if (mes) list = list.filter(g => (g.fecha || '').split('-')[1] === mes);
+  if (anio) list = list.filter(g => (g.fecha || '').split('-')[0] === anio);
+  if (cat) list = list.filter(g => g.categoria === cat);
+  list.sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+  const total = list.reduce((s, g) => s + (parseFloat(g.monto) || 0), 0);
+  const prom = total / (list.length || 1);
+  const mayor = list.reduce((s, g) => Math.max(s, parseFloat(g.monto) || 0), 0);
+  document.getElementById('stotal').textContent = fmtM(total);
+  document.getElementById('scount').textContent = list.length;
+  document.getElementById('sprom').textContent = fmtM(prom);
+  document.getElementById('smayor').textContent = mayor > 0 ? fmtM(mayor) : '—';
+  const tb = document.getElementById('tbhist');
+  if (!list.length) { tb.innerHTML = '<tr><td colspan="7"><div class="empty">Sin gastos registrados aún 📋</div></td></tr>'; return; }
+  const cc = { Insumos:'b1', Servicios:'b2', Arriendo:'b3', Marketing:'b4', Equipamiento:'b5' };
+  tb.innerHTML = list.map((g, i) => `<tr>
+    <td style="color:#888;white-space:nowrap;font-size:12px">${fmtD(g.fecha)}</td>
+    <td style="font-weight:600;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${g.comercio || '—'}</td>
+    <td style="color:#888;font-size:12px">${g.rut || '—'}</td>
+    <td style="color:#666;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px">${g.articulos || '—'}</td>
+    <td><span class="badge ${cc[g.categoria] || 'b6'}">${g.categoria || '—'}</span></td>
+    <td style="font-weight:700;color:#6c47ff;white-space:nowrap">${fmtM(g.monto)}</td>
+    <td><button class="delbtn" onclick="eliminar(${i})">✕</button></td>
+  </tr>`).join('');
+}
+
+async function eliminar(i) {
+  if (!confirm('¿Eliminar este gasto?')) return;
+  const g = gastos[i];
+  await postSheet({ accion: 'eliminar', id: g.id });
+  gastos.splice(i, 1); renderHist();
+  toast('Eliminado', 'ok');
+}
+
+function fmtM(v) { return '$' + (Math.round(parseFloat(v) || 0)).toLocaleString('es-CL'); }
+function fmtD(s) { if (!s) return '—'; try { return new Date(s + 'T12:00').toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' }) } catch (e) { return s; } }
+function toast(msg, tipo = 'ok') {
+  const t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast ' + tipo + ' show';
+  setTimeout(() => t.className = 'toast', 3500);
+}
+</script>
+</body>
+</html>
